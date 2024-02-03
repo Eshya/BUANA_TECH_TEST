@@ -52,4 +52,14 @@ mvn -B package --file pom.xml -Pdev
 java -jar target/buana_technical_test-0.0.1-SNAPSHOT.jar
 ```
 
+**Docker Build**
+```shell
+docker compose up
+```
+
+Detached mode
+```shell
+docker compose up -d
+```
+
 @author : achmadayas@gmail.com
