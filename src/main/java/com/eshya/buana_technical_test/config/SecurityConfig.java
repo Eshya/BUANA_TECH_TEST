@@ -1,7 +1,10 @@
 package com.eshya.buana_technical_test.config;
 
+import com.eshya.buana_technical_test.utils.AuthenticationTokenFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -16,10 +19,13 @@ import org.springframework.security.oauth2.client.web.reactive.function.client.S
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -71,8 +77,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 //        };
 //    }
 
-
-
+    @Bean
+    public AuthenticationTokenFilter authenticationJwtTokenFilter() {
+        return new AuthenticationTokenFilter();
+    }
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         SimpleUrlAuthenticationFailureHandler handler = new SimpleUrlAuthenticationFailureHandler("/");
@@ -80,6 +88,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .and()
             .authorizeRequests(a -> a
                 .antMatchers("/", "/error", "/webjars/**","/user").permitAll()
+                .antMatchers(HttpMethod.POST,"/auth/access-token").permitAll()
                 .antMatchers("/h2-console/**").permitAll()
                 .anyRequest().authenticated()
             )
@@ -88,15 +97,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .logoutSuccessUrl("/").permitAll()
                     .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
             )
-            .csrf(c -> c
-                    .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-            )
+            .csrf().disable()
             .oauth2Login(o -> o
                     .failureHandler((request, response, exception) -> {
                         request.getSession().setAttribute("error.message", exception.getMessage());
                         handler.onAuthenticationFailure(request, response, exception);
                     })
             );
+
+        http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
     }
 
 }

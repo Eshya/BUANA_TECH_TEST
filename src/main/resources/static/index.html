@@ -24,6 +24,10 @@
     </div>
     <div class="container authenticated">
         Logged in as: <span id="user"></span>
+        <br>
+        Access Token: <span id="token"></span>
+        <br>
+        Expire in: <span id="expire"></span>
         <div>
             <button onClick="logout()" class="btn btn-primary">Logout</button>
         </div>
@@ -51,6 +55,15 @@
             $(".unauthenticated").hide()
             $(".authenticated").show()
             $("#user").html(data.name)
+            $.post("/auth/access-token", function (data) {
+                if (data) {
+                    $("#token").html(data.accessToken)
+                    $("#expire").html(data.expiresAt)
+                } else {
+                    $("#token").html('')
+                    $("#expire").html('')
+                }
+            })
         }
     });
     var logout = function () {
